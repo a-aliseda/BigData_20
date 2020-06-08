@@ -4,6 +4,7 @@ library(ggplot2)
 library(xlsx)
 library(readxl)
 
+# Import Twitter database with tweets from Donald Trump and Joe Biden
 
 vignette("auth", package = "rtweet")
 
