@@ -16,9 +16,9 @@ output:
 library(rtweet)
 library(dplyr)
 library(ggplot2)
-library(xlsx)
 library(readxl)
 
+candidates_tweets <- read.csv("Candidates_tweets.csv")
 
 ```
 
