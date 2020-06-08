@@ -18,7 +18,9 @@ library(dplyr)
 library(ggplot2)
 library(readxl)
 
+# Load database from repository
 candidates_tweets <- read.csv("Candidates_tweets.csv")
+
 
 ```
 
