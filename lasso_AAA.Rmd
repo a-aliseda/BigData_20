@@ -110,7 +110,8 @@ success_fav_biden <- favs_biden$favorite_count>quantile(favs_biden$favorite_coun
 lasso_favs_trump_success <- gamlr(data_matrix[favs_trump$X,], 
                                   success_fav_trump,
                                   family = "binomial")
-plot(lasso_favs_trump_success)
+plot(lasso_favs_trump_success,
+     sub = "LASSO model for words on odds of being a successful tweet for Trump")
 
 lasso_favs_trump_success_coefs <- coef(lasso_favs_trump_success)[-1,]
 kable(lasso_favs_trump_success_coefs[order(-lasso_favs_trump_success_coefs)][1:10],
@@ -120,7 +121,8 @@ kable(lasso_favs_trump_success_coefs[order(-lasso_favs_trump_success_coefs)][1:1
 lasso_favs_biden_success <- gamlr(data_matrix[as.character(favs_biden$X),], 
                                   success_fav_biden,
                                   family = "binomial")
-plot(lasso_favs_biden_success)
+plot(lasso_favs_biden_success,
+     sub = "LASSO model for words on odds of being a successful tweet for Biden")
 
 lasso_favs_biden_success_coefs <- coef(lasso_favs_biden_success)[-1,]
 kable(lasso_favs_biden_success_coefs[order(-lasso_favs_biden_success_coefs)][1:10],
