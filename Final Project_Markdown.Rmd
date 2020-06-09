@@ -24,6 +24,9 @@ library(ggplot2)
 library(readxl)
 library(syuzhet)
 library(tibble)
+library(wordcloud)
+library(gamlr)
+library(maptpx)
 
 
 set.seed(411234)
