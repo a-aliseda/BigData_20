@@ -27,6 +27,7 @@ library(tibble)
 library(wordcloud)
 library(gamlr)
 library(maptpx)
+library(knitr)
 
 
 set.seed(411234)
@@ -203,13 +204,124 @@ qplot(sentiment, data=new_sa_biden[9:10,], weight=count, geom="bar",fill=sentime
 
 ```
 
+## LASSO analysis for count of words on Favorites and Retweets
 
-```{r logistic, warning=FALSE}
+```{r lasso_all, warning=FALSE, results='asis'}
 
+### Dependent variables for the LASSO analysis
+## Favorites
+# Total number of favorites for Trump for tweets included in term matrix
+tweets <- as.numeric(data_matrix$dimnames$Docs)
+
+favs_trump <- data %>% 
+  select(X, favorite_count) %>% 
+  filter(X<3215) %>% 
+  filter(X %in% tweets & favorite_count>0)
+
+# Total number of favorites for Biden for tweets included in term matrix
+
+favs_biden <- data %>% 
+  select(X, favorite_count) %>% 
+  filter(X>3214) %>% 
+  filter(X %in% tweets & favorite_count>0)
+
+## Retweets
+# Trump 
+rt_trump <- data %>% 
+  select(X, retweet_count) %>% 
+  filter(X<3215) %>% 
+  filter(X %in% tweets)
+
+# Biden 
+rt_biden <- data %>% 
+  select(X, retweet_count) %>% 
+  filter(X>3214) %>% 
+  filter(X %in% tweets)
+
+### LASSO for Favorites for each candidate
+
+lasso_favs_trump <- gamlr(data_matrix[favs_trump$X,], 
+                          favs_trump$favorite_count)
+
+lasso_favs_biden <- gamlr(data_matrix[as.character(favs_biden$X),],
+                          favs_biden$favorite_count)
+
+### LASSO for Retweets for each candidate
+lasso_rt_trump <- gamlr(data_matrix[rt_trump$X,], 
+                          rt_trump$retweet_count)
+
+lasso_rt_biden <- gamlr(data_matrix[as.character(rt_biden$X),],
+                          rt_biden$retweet_count)
+
+### LASSO plots for each model
+
+plot(lasso_favs_trump,
+     sub = "LASSO model for words on number of Favorites for Trump")
+
+plot(lasso_favs_biden,
+     sub = "LASSO model for words on number of Favorites for Biden")
+
+plot(lasso_rt_trump,
+     sub = "LASSO model for words on number of Retweets for Trump")
+
+plot(lasso_rt_biden,
+     sub = "LASSO model for words on number of Retweets for Biden")
+
+### Top 10 of words for both candidates
+## Top 10 words with most positive effect on favs for Trump
+
+lasso_favs_trump_coefs <- coef(lasso_favs_trump)[-1,]
+kable(lasso_favs_trump_coefs[order(-lasso_favs_trump_coefs)][1:10],
+      caption = "Trump's top 10 words with most positive effect on favorites")
+
+## Top 10 words with most negative effect on favs for Trump
+kable(lasso_favs_trump_coefs[order(lasso_favs_trump_coefs)][1:10],
+      caption = "Trump's top 10 words with most negative effect on favorites")
+
+## Top 10 words with most positive effect on favs for Biden
+
+lasso_favs_biden_coefs <- coef(lasso_favs_biden)[-1,]
+kable(lasso_favs_biden_coefs[order(-lasso_favs_biden_coefs)][1:10],
+      caption = "Biden's top 10 words with most positive effect on favorites")
+
+## Top 10 words with most negative effect on favs for Biden
+kable(lasso_favs_biden_coefs[order(lasso_favs_biden_coefs)][1:10],
+      caption = "Biden's top 10 words with most negative effect on favorites")
 
 
 ```
 
+
+
+```{r lasso_success, warning=FALSE}
+
+### We defined a "successful" tweet if it is on the 90th percentile or more 
+success_fav_trump <- favs_trump$favorite_count>quantile(favs_trump$favorite_count,.9)
+success_fav_biden <- favs_biden$favorite_count>quantile(favs_biden$favorite_count,.9)
+
+## Analysis for Trump's successful tweets
+lasso_favs_trump_success <- gamlr(data_matrix[favs_trump$X,], 
+                                  success_fav_trump,
+                                  family = "binomial")
+plot(lasso_favs_trump_success,
+     sub = "LASSO model for words on odds of being a successful tweet for Trump")
+
+lasso_favs_trump_success_coefs <- coef(lasso_favs_trump_success)[-1,]
+kable(lasso_favs_trump_success_coefs[order(-lasso_favs_trump_success_coefs)][1:10],
+      caption = "Trump's top 10 words with highest effect on odds of being a successful tweet")
+
+## Analysis for Bidens's successful tweets
+lasso_favs_biden_success <- gamlr(data_matrix[as.character(favs_biden$X),], 
+                                  success_fav_biden,
+                                  family = "binomial")
+plot(lasso_favs_biden_success,
+     sub = "LASSO model for words on odds of being a successful tweet for Biden")
+
+lasso_favs_biden_success_coefs <- coef(lasso_favs_biden_success)[-1,]
+kable(lasso_favs_biden_success_coefs[order(-lasso_favs_biden_success_coefs)][1:10],
+      caption = "Biden's top 10 words with highest effect on odds of being a successful tweet")
+
+```
 
 
 ## References
