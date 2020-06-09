@@ -71,34 +71,99 @@ dim(data_tokens)
   # creating a document-term matrix with all features and tf weighting
   cast_dtm(document = X, term = word_stem, value = n))
 ```
-
-## Topic Modelling -> Fernando
+## Topic Modelling
 ```{r}
-test <- as.matrix(data_matrix)
-
-topics_trump <- data_tokens %>%
+data_matrix_trump <- data_tokens %>%
   mutate(screen_name = as.character(screen_name)) %>%
-  filter(screen_name == "realDonaldTrump") %>%
+  filter(screen_name == "realDonaldTrump",
+         text != "trump") %>%
   count(X, text) %>%
   cast_dtm(document = X,
            term = text,
            value = n) %>%
-  removeSparseTerms(sparse = .95) %>%
-  LDA(k = 20, control = list(seed = 411234))
+  removeSparseTerms(sparse = .99)
 
-topics_trump <- LDA(data_matrix, k = 20, control = list(seed = 123))
-topics_trump
+data_matrix_biden <- data_tokens %>%
+  mutate(screen_name = as.character(screen_name)) %>%
+  filter(screen_name == "JoeBiden",
+         text != "trump") %>%
+  count(X, text) %>%
+  cast_dtm(document = X,
+           term = text,
+           value = n) %>%
+  removeSparseTerms(sparse = .99)
 
-raw.sum=apply(data_matrix,
-              1,
-              FUN=sum)
-View(raw.sum)
+# remove documents with no terms remaining
+(data_matrix_trump <- data_matrix_trump[unique(data_matrix_trump$i),])
+(data_matrix_biden <- data_matrix_biden[unique(data_matrix_biden$i),])
 
-sum(raw.sum)
+# Assuming only 2 topics
+trump_topics <- topics(data_matrix_trump,K=2, verb=10)
+rownames(trump_topics$theta)[order(trump_topics$theta[,1], decreasing=TRUE)[1:5]]
+rownames(trump_topics$theta)[order(trump_topics$theta[,2], decreasing=TRUE)[1:5]]
 
-data_matrix=data_matrix[raw.sum!=0,]
+biden_topics <- topics(data_matrix_biden,K=2, verb=10)
+rownames(biden_topics$theta)[order(biden_topics$theta[,1], decreasing=TRUE)[1:5]]
+rownames(biden_topics$theta)[order(biden_topics$theta[,2], decreasing=TRUE)[1:5]]
 ```
 
+### wordcloud
+```{r}
+# TRUMP
+par(mfrow=c(1,2))
+wordcloud(row.names(trump_topics$theta),
+          freq=trump_topics$theta[,1],
+          #min.freq=0.0001,
+          col="maroon")
+wordcloud(row.names(trump_topics$theta), 
+          freq=trump_topics$theta[,2],
+          #min.freq=0.0001,
+          col="navy")
+
+# BIDEN
+par(mfrow=c(1,2))
+
+wordcloud(row.names(biden_topics$theta),
+          freq=biden_topics$theta[,1],
+          #min.freq=0.0001,
+          col="maroon")
+wordcloud(row.names(biden_topics$theta), 
+          freq=biden_topics$theta[,2],
+          #min.freq=0.0001,
+          col="navy")
+```
+
+### Topic regression
+```{r}
+## omega is the matrix of tweets topic weights
+## we'll regress retweets_counts onto it
+trump_fav <- slice(data, as.numeric(data_matrix_trump$dimnames$Docs))
+y <- trump_fav[,"retweet_count"]
+
+trumpreg <- gamlr(trump_topics$omega, y)
+
+coef(trumpreg)*0.1 # number of retweets up or down for moving up 10\% weight in that topic
+
+regtopics.cv <- cv.gamlr(trump_topics$omega, y,lambda.min.ratio=10^{-4})
+regtopics.cv
+
+## give it the word %s as inputs
+#x <- 100*data_matrix_trump/rowSums(data_matrix_trump)
+
+regwords.cv <- cv.gamlr(data_matrix_trump, y)
+
+par(mfrow=c(1,2))
+
+plot(regtopics.cv)
+mtext("topic regression", font=2, line=2)
+
+plot(regwords.cv)
+mtext("bigram regression", font=2, line=2)
+
+# min OOS MSE
+min(regtopics.cv$cvm)
+min(regwords.cv$cvm)
+```
 
 ## Sentiment Analysis
 ```{r, warning=FALSE}
@@ -133,4 +198,12 @@ qplot(sentiment, data=new_sa_biden[1:8,], weight=count, geom="bar",fill=sentimen
 qplot(sentiment, data=new_sa_trump[9:10,], weight=count, geom="bar",fill=sentiment)+ggtitle("Trump's Sentiments")
 qplot(sentiment, data=new_sa_biden[9:10,], weight=count, geom="bar",fill=sentiment)+ggtitle("Biden's Sentiments")
 
+```
+
+
+## References
+
+## Session info
+```{r}
+devtools::session_info()
 ```
