@@ -79,21 +79,21 @@ plot(lasso_rt_biden,
 
 lasso_favs_trump_coefs <- coef(lasso_favs_trump)[-1,]
 kable(lasso_favs_trump_coefs[order(-lasso_favs_trump_coefs)][1:10],
-      caption = "Top 10 words with most positive effect on favorites for Trump")
+      caption = "Trump's top 10 words with most positive effect on favorites")
 
 ## Top 10 words with most negative effect on favs for Trump
 kable(lasso_favs_trump_coefs[order(lasso_favs_trump_coefs)][1:10],
-      caption = "Top 10 words with most negative effect on favorites for Trump")
+      caption = "Trump's top 10 words with most negative effect on favorites")
 
 ## Top 10 words with most positive effect on favs for Biden
 
 lasso_favs_biden_coefs <- coef(lasso_favs_biden)[-1,]
 kable(lasso_favs_biden_coefs[order(-lasso_favs_biden_coefs)][1:10],
-      caption = "Top 10 words with most positive effect on favorites for Biden")
+      caption = "Biden's top 10 words with most positive effect on favorites")
 
 ## Top 10 words with most negative effect on favs for Biden
 kable(lasso_favs_biden_coefs[order(lasso_favs_biden_coefs)][1:10],
-      caption = "Top 10 words with most negative effect on favorites for Biden")
+      caption = "Biden's top 10 words with most negative effect on favorites")
 
 
 ```
@@ -102,11 +102,29 @@ kable(lasso_favs_biden_coefs[order(lasso_favs_biden_coefs)][1:10],
 
 ```{r lasso_success, warning=FALSE}
 
-### We defined a "successful" tweet if it is on the 80th percentile or more 
+### We defined a "successful" tweet if it is on the 90th percentile or more 
+success_fav_trump <- favs_trump$favorite_count>quantile(favs_trump$favorite_count,.9)
+success_fav_biden <- favs_biden$favorite_count>quantile(favs_biden$favorite_count,.9)
 
-success_fav_trump <- 
+## Analysis for Trump's successful tweets
+lasso_favs_trump_success <- gamlr(data_matrix[favs_trump$X,], 
+                                  success_fav_trump,
+                                  family = "binomial")
+plot(lasso_favs_trump_success)
 
+lasso_favs_trump_success_coefs <- coef(lasso_favs_trump_success)[-1,]
+kable(lasso_favs_trump_success_coefs[order(-lasso_favs_trump_success_coefs)][1:10],
+      caption = "Trump's top 10 words with highest effect on odds of being a successful tweet")
 
+## Analysis for Bidens's successful tweets
+lasso_favs_biden_success <- gamlr(data_matrix[as.character(favs_biden$X),], 
+                                  success_fav_biden,
+                                  family = "binomial")
+plot(lasso_favs_biden_success)
+
+lasso_favs_biden_success_coefs <- coef(lasso_favs_biden_success)[-1,]
+kable(lasso_favs_biden_success_coefs[order(-lasso_favs_biden_success_coefs)][1:10],
+      caption = "Biden's top 10 words with highest effect on odds of being a successful tweet")
 
 ```
 
