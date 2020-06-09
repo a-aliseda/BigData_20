@@ -13,7 +13,7 @@ set.seed(411234)
 ```
 
 
-```{r lasso_all, warning=FALSE}
+```{r lasso_all, warning=FALSE, results='asis'}
 
 ### Dependent variables for the LASSO analysis
 ## Favorites
@@ -74,4 +74,39 @@ plot(lasso_rt_trump,
 plot(lasso_rt_biden,
      sub = "LASSO model for words on number of Retweets for Biden")
 
+### Top 10 of words for both candidates
+## Top 10 words with most positive effect on favs for Trump
+
+lasso_favs_trump_coefs <- coef(lasso_favs_trump)[-1,]
+kable(lasso_favs_trump_coefs[order(-lasso_favs_trump_coefs)][1:10],
+      caption = "Top 10 words with most positive effect on favorites for Trump")
+
+## Top 10 words with most negative effect on favs for Trump
+kable(lasso_favs_trump_coefs[order(lasso_favs_trump_coefs)][1:10],
+      caption = "Top 10 words with most negative effect on favorites for Trump")
+
+## Top 10 words with most positive effect on favs for Biden
+
+lasso_favs_biden_coefs <- coef(lasso_favs_biden)[-1,]
+kable(lasso_favs_biden_coefs[order(-lasso_favs_biden_coefs)][1:10],
+      caption = "Top 10 words with most positive effect on favorites for Biden")
+
+## Top 10 words with most negative effect on favs for Biden
+kable(lasso_favs_biden_coefs[order(lasso_favs_biden_coefs)][1:10],
+      caption = "Top 10 words with most negative effect on favorites for Biden")
+
+
 ```
+
+
+
+```{r lasso_success, warning=FALSE}
+
+### We defined a "successful" tweet if it is on the 80th percentile or more 
+
+success_fav_trump <- 
+
+
+
+```
+
