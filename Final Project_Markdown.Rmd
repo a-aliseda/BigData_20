@@ -7,24 +7,70 @@ output:
   pdf_document: default
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      warning = TRUE,
+                      message = TRUE,
+                      fig.align = "center")
 
-## Retrieving the tweets from the accounts of Donald Trump and Joe Biden
+library(tidyverse)
 
-```{r, results="show", warning=FALSE}
-## actors network example
+library(tidytext)
+library(SnowballC)
+library(tm)
 
 library(rtweet)
 library(dplyr)
 library(ggplot2)
 library(readxl)
 
-# Load database from repository
-candidates_tweets <- read.csv("Candidates_tweets.csv")
+set.seed(411234)
 
-#######
-#####
-
-
+theme_set(theme_minimal())
 ```
 
+## Retrieving the tweets from the accounts of Donald Trump and Joe Biden
+
+## Data transformation
+```{r Data}
+# Load database from repository
+data <- read.csv(file = "Candidates_tweets.csv") %>%
+  mutate(text = as.character(text))
+
+var_list <- names(data)
+#View(var_list)
+dim(data)
+```
+
+```{r data one-word-per-row}
+# Transformation -> one-word-per-row
+data_tokens <- data %>% 
+  # tokenizing text from tweets
+  unnest_tokens(output = text,                       
+                input = text) %>%
+  # remove numbers and string to lowercase
+  filter(!str_detect(text, "^[0-9]*$")) %>%
+  mutate(text = str_to_lower(text)) %>%
+  # removing stop words
+  anti_join(stop_words, by = c("text" = "word")) %>%
+  # stemming words to avoid redundancy
+  mutate(word_stem = wordStem(text)) %>%
+  # merging with SENTIMENT DICTIONARY
+  inner_join(get_sentiments("bing"), by = c("text" = "word"))
+
+dim(data_tokens)
+```
+
+```{r data one-tweet-per-row matrix}
+# Transformation -> one-tweet-per-row matrix
+data_matrix <- data_tokens %>%
+  # get count of each token in each document
+  count(X, text) %>%
+  # creating a document-term matrix with all features and tf weighting
+  cast_dtm(document = X, term = text, value = n) %>%
+  # removing tokens that appear in less than 5% of tweets
+  removeSparseTerms(sparse = .95)
+
+str(data_matrix)
+```
 
