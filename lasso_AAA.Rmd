@@ -63,7 +63,15 @@ lasso_rt_biden <- gamlr(data_matrix[as.character(rt_biden$X),],
 ### LASSO plots for each model
 
 plot(lasso_favs_trump,
-     subtitle = "")
+     sub = "LASSO model for words on number of Favorites for Trump")
 
+plot(lasso_favs_biden,
+     sub = "LASSO model for words on number of Favorites for Biden")
+
+plot(lasso_rt_trump,
+     sub = "LASSO model for words on number of Retweets for Trump")
+
+plot(lasso_rt_biden,
+     sub = "LASSO model for words on number of Retweets for Biden")
 
 ```
