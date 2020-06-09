@@ -204,6 +204,14 @@ qplot(sentiment, data=new_sa_biden[9:10,], weight=count, geom="bar",fill=sentime
 ```
 
 
+```{r logistic, warning=FALSE}
+
+
+
+```
+
+
+
 ## References
 
 ## Session info
