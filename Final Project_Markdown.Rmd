@@ -102,18 +102,35 @@ data_matrix=data_matrix[raw.sum!=0,]
 
 ## Sentiment Analysis
 ```{r, warning=FALSE}
+#Sentiment analysis for Trump
+data_trump <- data[data$screen_name== "realDonaldTrump",]
+data_trump$text_plain <- plain_tweets(data_trump$text)
+sa_trump <- get_nrc_sentiment(data_trump$text_plain)
+#Transposing the dataset
+sa1_trump<-data.frame(t(sa_trump))
+#Obtaining count
+new_sa_trump <- data.frame(rowSums(sa1_trump))
+names(new_sa_trump)[1] <- "count"
+new_sa_trump <- cbind("sentiment" = rownames(new_sa_trump), new_sa_trump)
+rownames(new_sa_trump) <- NULL
 
-data$text_plain <- plain_tweets(data$text)
-sentiment_analysis <- get_nrc_sentiment(data$text_plain)
 
-#Merging dataset
-data_sentiment <- cbind(data, sentiment_analysis)
+#Sentiment analysis for Biden
+data_biden <- data[data$screen_name== "JoeBiden",]
+data_biden$text_plain <- plain_tweets(data_biden$text)
+sa_biden <- get_nrc_sentiment(data_biden$text_plain)
+#Transposing the dataset
+sa1_biden<-data.frame(t(sa_biden))
+#Obtaining count
+new_sa_biden <- data.frame(rowSums(sa1_biden))
+names(new_sa_biden)[1] <- "count"
+new_sa_biden <- cbind("sentiment" = rownames(new_sa_biden), new_sa_biden)
+rownames(new_sa_biden) <- NULL
 
-#Subsetting data for Trump and Biden
-data_trump <- data_sentiment[data_sentiment$screen_name== "realDonaldTrump",]
-data_biden <- data_sentiment[data_sentiment$screen_name== "JoeBiden",]
-
-hist(data_trump$positive)
-hist(data_biden$positive)
+#Plotting the sentiments
+qplot(sentiment, data=new_sa_trump[1:8,], weight=count, geom="bar",fill=sentiment)+ggtitle("Trump's Sentiments")
+qplot(sentiment, data=new_sa_biden[1:8,], weight=count, geom="bar",fill=sentiment)+ggtitle("Biden's Sentiments")
+qplot(sentiment, data=new_sa_trump[9:10,], weight=count, geom="bar",fill=sentiment)+ggtitle("Trump's Sentiments")
+qplot(sentiment, data=new_sa_biden[9:10,], weight=count, geom="bar",fill=sentiment)+ggtitle("Biden's Sentiments")
 
 ```
