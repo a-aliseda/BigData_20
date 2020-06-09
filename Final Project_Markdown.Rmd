@@ -1,0 +1,194 @@
+---
+title: "Big Data: Final Project"
+author: "Angel Aliseda, Javier Patino, Fernando Regalado, Felipe Salazar"
+date: "5/12/2020"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      warning = TRUE,
+                      message = TRUE,
+                      fig.align = "center")
+
+library(tidyverse)
+
+library(tidytext)
+library(SnowballC)
+library(tm)
+
+library(topicmodels)
+library(wordcloud)
+library(gamlr)
+
+library(rtweet)
+library(dplyr)
+library(ggplot2)
+library(readxl)
+
+library(syuzhet)
+library(tibble)
+
+set.seed(411234)
+
+theme_set(theme_minimal())
+```
+
+## Retrieving the tweets from the accounts of Donald Trump and Joe Biden
+
+## Data transformation
+```{r Data}
+# Load database from repository
+data <- read.csv(file = "Candidates_tweets.csv") %>%
+  mutate(text = as.character(text))
+
+var_list <- names(data)
+#View(var_list)
+dim(data)
+```
+
+```{r data one-word-per-row}
+# Transformation -> one-word-per-row
+data_tokens <- data %>% 
+  # tokenizing text from tweets
+  unnest_tokens(output = text,                       
+                input = text) %>%
+  # remove numbers and string to lowercase
+  filter(!str_detect(text, "^[0-9]*$")) %>%
+  mutate(text = str_to_lower(text)) %>%
+  # removing stop words
+  anti_join(stop_words, by = c("text" = "word")) %>%
+  # stemming words to avoid redundancy
+  mutate(word_stem = wordStem(text)) %>%
+  # merging with SENTIMENT DICTIONARY
+  inner_join(get_sentiments("bing"), by = c("text" = "word"))
+
+dim(data_tokens)
+```
+
+```{r data one-tweet-per-row matrix}
+# Transformation -> one-tweet-per-row matrix
+data_matrix <- data_tokens %>%
+  # get count of each token in each document
+  count(X, word_stem) %>%
+  # creating a document-term matrix with all features and tf weighting
+  cast_dtm(document = X, term = word_stem, value = n)
+```
+
+## Topic Modelling
+```{r}
+data_matrix_trump <- data_tokens %>%
+  mutate(screen_name = as.character(screen_name)) %>%
+  filter(screen_name == "realDonaldTrump",
+         text != "trump") %>%
+  count(X, text) %>%
+  cast_dtm(document = X,
+           term = text,
+           value = n) %>%
+  removeSparseTerms(sparse = .99)
+
+data_matrix_biden <- data_tokens %>%
+  mutate(screen_name = as.character(screen_name)) %>%
+  filter(screen_name == "JoeBiden",
+         text != "trump") %>%
+  count(X, text) %>%
+  cast_dtm(document = X,
+           term = text,
+           value = n) %>%
+  removeSparseTerms(sparse = .99)
+
+# remove documents with no terms remaining
+(data_matrix_trump <- data_matrix_trump[unique(data_matrix_trump$i),])
+(data_matrix_biden <- data_matrix_biden[unique(data_matrix_biden$i),])
+
+# Assuming only 2 topics
+trump_topics <- topics(data_matrix_trump,K=2, verb=10)
+rownames(trump_topics$theta)[order(trump_topics$theta[,1], decreasing=TRUE)[1:5]]
+rownames(trump_topics$theta)[order(trump_topics$theta[,2], decreasing=TRUE)[1:5]]
+
+biden_topics <- topics(data_matrix_biden,K=2, verb=10)
+rownames(biden_topics$theta)[order(biden_topics$theta[,1], decreasing=TRUE)[1:5]]
+rownames(biden_topics$theta)[order(biden_topics$theta[,2], decreasing=TRUE)[1:5]]
+```
+
+### wordcloud
+```{r}
+# TRUMP
+par(mfrow=c(1,2))
+wordcloud(row.names(trump_topics$theta),
+          freq=trump_topics$theta[,1],
+          #min.freq=0.0001,
+          col="maroon")
+wordcloud(row.names(trump_topics$theta), 
+          freq=trump_topics$theta[,2],
+          #min.freq=0.0001,
+          col="navy")
+
+# BIDEN
+par(mfrow=c(1,2))
+
+wordcloud(row.names(biden_topics$theta),
+          freq=biden_topics$theta[,1],
+          #min.freq=0.0001,
+          col="maroon")
+wordcloud(row.names(biden_topics$theta), 
+          freq=biden_topics$theta[,2],
+          #min.freq=0.0001,
+          col="navy")
+```
+
+### Topic regression
+```{r}
+## omega is the matrix of tweets topic weights
+## we'll regress retweets_counts onto it
+trump_fav <- slice(data, as.numeric(data_matrix_trump$dimnames$Docs))
+y <- trump_fav[,"retweet_count"]
+
+trumpreg <- gamlr(trump_topics$omega, y)
+
+coef(trumpreg)*0.1 # number of retweets up or down for moving up 10\% weight in that topic
+
+regtopics.cv <- cv.gamlr(trump_topics$omega, y,lambda.min.ratio=10^{-4})
+regtopics.cv
+
+## give it the word %s as inputs
+#x <- 100*data_matrix_trump/rowSums(data_matrix_trump)
+
+regwords.cv <- cv.gamlr(data_matrix_trump, y)
+
+par(mfrow=c(1,2))
+
+plot(regtopics.cv)
+mtext("topic regression", font=2, line=2)
+
+plot(regwords.cv)
+mtext("bigram regression", font=2, line=2)
+
+# min OOS MSE
+min(regtopics.cv$cvm)
+min(regwords.cv$cvm)
+```
+
+
+
+## Sentiment Analysis
+```{r, warning=FALSE}
+data$text_plain <- plain_tweets(data$text)
+sentiment_analysis <- get_nrc_sentiment(data$text_plain)
+#Merging dataset
+data_sentiment <- cbind(data, sentiment_analysis)
+#Subsetting data for Trump and Biden
+data_trump <- data_sentiment[data_sentiment$screen_name== "realDonaldTrump",]
+data_biden <- data_sentiment[data_sentiment$screen_name== "JoeBiden",]
+hist(data_trump$positive)
+hist(data_biden$positive)
+
+
+## References
+
+## Session info
+```{r}
+devtools::session_info()
+```
