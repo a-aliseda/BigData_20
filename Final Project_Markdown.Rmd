@@ -19,6 +19,8 @@ library(tidytext)
 library(SnowballC)
 library(tm)
 
+library(topicmodels)
+
 library(rtweet)
 library(dplyr)
 library(ggplot2)
@@ -63,14 +65,37 @@ dim(data_tokens)
 
 ```{r data one-tweet-per-row matrix}
 # Transformation -> one-tweet-per-row matrix
-data_matrix <- data_tokens %>%
+(data_matrix <- data_tokens %>%
   # get count of each token in each document
-  count(X, text) %>%
+  count(X, word_stem) %>%
   # creating a document-term matrix with all features and tf weighting
-  cast_dtm(document = X, term = text, value = n) %>%
-  # removing tokens that appear in less than 5% of tweets
-  removeSparseTerms(sparse = .95)
+  cast_dtm(document = X, term = word_stem, value = n) %>%
+  # removing tokens that appear in less than 1% of tweets
+  removeSparseTerms(sparse = .99))
 
 str(data_matrix)
+```
+
+## Topic Modelling -> Fernando
+```{r}
+topics_trump <- data_tokens %>%
+  mutate(screen_name = as.character(screen_name)) %>%
+  filter(screen_name == "realDonaldTrump") %>%
+  count(X, text) %>%
+  cast_dtm(document = X,
+           term = text,
+           value = n) %>%
+  removeSparseTerms(sparse = .95) %>%
+  LDA(k = 20, control = list(seed = 411234))
+
+topics_trump <- LDA(data_matrix, k = 20, control = list(seed = 123))
+topics_trump
+
+raw.sum=apply(data_matrix,1,FUN=sum)
+View(raw.sum)
+
+sum(raw.sum)
+
+data_matrix=data_matrix[raw.sum!=0,]
 ```
 
