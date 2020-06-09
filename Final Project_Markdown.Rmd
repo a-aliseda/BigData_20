@@ -14,17 +14,17 @@ knitr::opts_chunk$set(echo = TRUE,
                       fig.align = "center")
 
 library(tidyverse)
-
 library(tidytext)
 library(SnowballC)
 library(tm)
-
 library(topicmodels)
-
 library(rtweet)
 library(dplyr)
 library(ggplot2)
 library(readxl)
+library(syuzhet)
+library(tibble)
+
 
 set.seed(411234)
 
@@ -100,8 +100,20 @@ data_matrix=data_matrix[raw.sum!=0,]
 ```
 
 
-## Sentiment Analysis -> Javier
-```{r}
+## Sentiment Analysis
+```{r, warning=FALSE}
 
+data$text_plain <- plain_tweets(data$text)
+sentiment_analysis <- get_nrc_sentiment(data$text_plain)
+
+#Merging dataset
+data_sentiment <- cbind(data, sentiment_analysis)
+
+#Subsetting data for Trump and Biden
+data_trump <- data_sentiment[data_sentiment$screen_name== "realDonaldTrump",]
+data_biden <- data_sentiment[data_sentiment$screen_name== "JoeBiden",]
+
+hist(data_trump$positive)
+hist(data_biden$positive)
 
 ```
