@@ -7,19 +7,63 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+set.seed(411234)
+
+
 ```
 
 
-```{r logistic, warning=FALSE}
+```{r lasso_all, warning=FALSE}
 
-# Obtaining the total number of favorites for Trump for tweets included in term matrix
-trump_tweets <- as.numeric(data_matrix$dimnames$Docs)
+### Dependent variables for the LASSO analysis
+## Favorites
+# Total number of favorites for Trump for tweets included in term matrix
+tweets <- as.numeric(data_matrix$dimnames$Docs)
 
 favs_trump <- data %>% 
   select(X, favorite_count) %>% 
   filter(X<3215) %>% 
-  filter(X %in% trump_tweets)
+  filter(X %in% tweets & favorite_count>0)
 
-favs_trump_nort <- favs_trump
+# Total number of favorites for Biden for tweets included in term matrix
+
+favs_biden <- data %>% 
+  select(X, favorite_count) %>% 
+  filter(X>3214) %>% 
+  filter(X %in% tweets & favorite_count>0)
+
+## Retweets
+# Trump 
+rt_trump <- data %>% 
+  select(X, retweet_count) %>% 
+  filter(X<3215) %>% 
+  filter(X %in% tweets)
+
+# Biden 
+rt_biden <- data %>% 
+  select(X, retweet_count) %>% 
+  filter(X>3214) %>% 
+  filter(X %in% tweets)
+
+### LASSO for Favorites for each candidate
+
+lasso_favs_trump <- gamlr(data_matrix[favs_trump$X,], 
+                          favs_trump$favorite_count)
+
+lasso_favs_biden <- gamlr(data_matrix[as.character(favs_biden$X),],
+                          favs_biden$favorite_count)
+
+### LASSO for Retweets for each candidate
+lasso_rt_trump <- gamlr(data_matrix[rt_trump$X,], 
+                          rt_trump$retweet_count)
+
+lasso_rt_biden <- gamlr(data_matrix[as.character(rt_biden$X),],
+                          rt_biden$retweet_count)
+
+### LASSO plots for each model
+
+plot(lasso_favs_trump,
+     subtitle = "")
+
 
 ```
