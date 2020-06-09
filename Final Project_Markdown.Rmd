@@ -292,7 +292,7 @@ kable(lasso_favs_biden_coefs[order(lasso_favs_biden_coefs)][1:10],
 ```
 
 
-
+## LASSO analysis for "successful" tweets
 ```{r lasso_success, warning=FALSE}
 
 ### We defined a "successful" tweet if it is on the 90th percentile or more 
