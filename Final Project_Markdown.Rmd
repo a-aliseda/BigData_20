@@ -206,7 +206,7 @@ qplot(sentiment, data=new_sa_biden[9:10,], weight=count, geom="bar",fill=sentime
 
 ## LASSO analysis for count of words on Favorites and Retweets
 
-```{r lasso_all, warning=FALSE, results='asis'}
+```{r fav_rt, warning=FALSE, results='asis'}
 
 ### Dependent variables for the LASSO analysis
 ## Favorites
@@ -216,29 +216,38 @@ tweets <- as.numeric(data_matrix$dimnames$Docs)
 favs_trump <- data %>% 
   select(X, favorite_count) %>% 
   filter(X<3215) %>% 
-  filter(X %in% tweets & favorite_count>0)
+  filter(X %in% tweets & favorite_count>0) #original tweets included in the term matrix 
 
 # Total number of favorites for Biden for tweets included in term matrix
 
 favs_biden <- data %>% 
   select(X, favorite_count) %>% 
   filter(X>3214) %>% 
-  filter(X %in% tweets & favorite_count>0)
+  filter(X %in% tweets & favorite_count>0) #original tweets included in the term matrix
 
 ## Retweets
 # Trump 
 rt_trump <- data %>% 
   select(X, retweet_count) %>% 
   filter(X<3215) %>% 
-  filter(X %in% tweets)
+  filter(X %in% tweets) #retweets included in the term matrix
 
 # Biden 
 rt_biden <- data %>% 
   select(X, retweet_count) %>% 
   filter(X>3214) %>% 
-  filter(X %in% tweets)
+  filter(X %in% tweets) #retweets included in the term matrix
+```
 
-### LASSO for Favorites for each candidate
+What makes a successful tweet? Are there common words for candidates that gets them more favorites or retweets? In order to answer these questions, we performed a predictive analysis where we looked at whether there are common words that predict if a tweet is succesful. To do this, we used two variables that we obtained from the Twitter database which are total number of Favorites and total number of Retweets. 
+
+We performed a LASSO analysis for both candidates and for Favorites and Retweets sepparately. Trump's tweets have a median of `r median(favs_trump$favorite_count)` favs and a median of `r median(rt_trump$retweet_count)` retweets. On the other hand, Biden's tweets have a median of `r median(favs_biden$favorite_count)` favs and `r median(rt_biden$retweet_count)` retweets. We can see here that, at least in Twitter, candidate Trump is more popular than candidate Biden which is reflection of the amount of time Trump invested in Twitter during his campaign and his presidency. 
+
+The following plots show the LASSO analysis of the total number of favs and retweets by each word using the matrix we computed for the topic analysis. From the models with the lowest AICc, we obtained the top 10 words with the most positive and most negative effect for retweets and favs for each candidate.
+
+
+``` {r lasso_all, warning=FALSE, results='asis'}
+### LASSO for total count of Favorites as outcome variable for each candidate
 
 lasso_favs_trump <- gamlr(data_matrix[favs_trump$X,], 
                           favs_trump$favorite_count)
@@ -246,7 +255,7 @@ lasso_favs_trump <- gamlr(data_matrix[favs_trump$X,],
 lasso_favs_biden <- gamlr(data_matrix[as.character(favs_biden$X),],
                           favs_biden$favorite_count)
 
-### LASSO for Retweets for each candidate
+### LASSO for total count of Retweets as outcome variable for each candidate
 lasso_rt_trump <- gamlr(data_matrix[rt_trump$X,], 
                           rt_trump$retweet_count)
 
@@ -291,9 +300,13 @@ kable(lasso_favs_biden_coefs[order(lasso_favs_biden_coefs)][1:10],
 
 ```
 
+In the case of Trump's tweets, we can see that words such as 'obstacle', 'astoundishing', 'uncertain', or 'afraid' are the words with the most positive effects. The largest effect is the word 'bitter', because having that word in a tweet increased `r lasso_favs_trump_coefs[order(-lasso_favs_trump_coefs)][1]` the number of favorites a tweet receives. Moreover, the 10 words that have most negative effects in Trump's tweets are 'collusion', 'fast', 'strong', 'hater', 'approval'. This words relate to the Russia investigation but also they could relate to his continuous tweets about his allegedly high approval rate.
+ 
+On the other hand, Biden's tweets have
+
 
 ## LASSO analysis for "successful" tweets
-```{r lasso_success, warning=FALSE}
+```{r lasso_success, warning=FALSE, results='asis'}
 
 ### We defined a "successful" tweet if it is on the 90th percentile or more 
 success_fav_trump <- favs_trump$favorite_count>quantile(favs_trump$favorite_count,.9)
