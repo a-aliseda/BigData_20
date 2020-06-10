@@ -276,26 +276,43 @@ plot(lasso_rt_trump,
 plot(lasso_rt_biden,
      sub = "LASSO model for words on number of Retweets for Biden")
 
-### Top 10 of words for both candidates
-## Top 10 words with most positive effect on favs for Trump
+### Top 5 words with highest effect on Favorites for both candidates
+## Top 5 words with most positive effect on favs for Trump
 
 lasso_favs_trump_coefs <- coef(lasso_favs_trump)[-1,]
-kable(lasso_favs_trump_coefs[order(-lasso_favs_trump_coefs)][1:10],
-      caption = "Trump's top 10 words with most positive effect on favorites")
+kable(lasso_favs_trump_coefs[order(-lasso_favs_trump_coefs)][1:5],
+      caption = "Trump's top 5 words with most positive effect on favorites")
 
-## Top 10 words with most negative effect on favs for Trump
-kable(lasso_favs_trump_coefs[order(lasso_favs_trump_coefs)][1:10],
-      caption = "Trump's top 10 words with most negative effect on favorites")
+## Top 5 words with most negative effect on favs for Trump
+kable(lasso_favs_trump_coefs[order(lasso_favs_trump_coefs)][1:5],
+      caption = "Trump's top 5 words with most negative effect on favorites")
 
-## Top 10 words with most positive effect on favs for Biden
-
+## Top 5 words with most positive effect on favs for Biden
 lasso_favs_biden_coefs <- coef(lasso_favs_biden)[-1,]
-kable(lasso_favs_biden_coefs[order(-lasso_favs_biden_coefs)][1:10],
-      caption = "Biden's top 10 words with most positive effect on favorites")
+kable(lasso_favs_biden_coefs[order(-lasso_favs_biden_coefs)][1:5],
+      caption = "Biden's top 5 words with most positive effect on favorites")
 
-## Top 10 words with most negative effect on favs for Biden
-kable(lasso_favs_biden_coefs[order(lasso_favs_biden_coefs)][1:10],
-      caption = "Biden's top 10 words with most negative effect on favorites")
+## Top 5 words with most negative effect on favs for Biden
+kable(lasso_favs_biden_coefs[order(lasso_favs_biden_coefs)][1:5],
+      caption = "Biden's top 5 words with most negative effect on favorites")
+
+## Top 5 words with most positive effect on rt for Trump
+lasso_rt_trump_coefs <- coef(lasso_rt_trump)[-1,]
+kable(lasso_rt_trump_coefs[order(-lasso_rt_trump_coefs)][1:5],
+      caption = "Trump's top 5 words with most positive effect on retweets")
+
+## Top 5 words with most negative effect on rt for Trump
+kable(lasso_rt_trump_coefs[order(lasso_rt_trump_coefs)][1:5],
+      caption = "Trump's top 5 words with most negative effect on retweets")
+
+## Top 5 words with most positive effect on rt for Biden
+lasso_rt_biden_coefs <- coef(lasso_rt_biden)[-1,]
+kable(lasso_rt_biden_coefs[order(-lasso_rt_biden_coefs)][1:5],
+      caption = "Biden's top 5 words with most positive effect on retweets")
+
+## Top 5 words with most negative effect on rt for Biden
+kable(lasso_rt_biden_coefs[order(lasso_rt_biden_coefs)][1:5],
+      caption = "Biden's top 5 words with most negative effect on retweets")
 
 
 ```
