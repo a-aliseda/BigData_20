@@ -357,8 +357,9 @@ kable(lasso_favs_biden_success_coefs[order(-lasso_favs_biden_success_coefs)][1:1
 
 ```
 
+Additional to the analysis on the number of favorites and retweets, we performed an analysis on the words that increased the probability of being in a successful tweet. We defined 'successful' as a binary variable that indicates whether a tweet is on the 90th percentile with most favorites for each candidates. We defined this variable this way because of the large difference between the number of favorites each candidate receives.
 
-Test Felipe
+We used a logistic LASSO with the 'successful' tweet variable as the outcome variable, and all the words we identified above as covariates. For Trump's tweets, the inclusion of words with the root 'horrif', such as 'horrific' or 'horrifying', increases the odds of a tweet to be on the 90th percentil of most successful tweets by `r exp(lasso_favs_trump_success_coefs[order(-lasso_favs_trump_success_coefs)][1])` times, holding everything else constant.
 
 ## References
 
