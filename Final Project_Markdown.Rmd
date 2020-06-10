@@ -361,6 +361,10 @@ Additional to the analysis on the number of favorites and retweets, we performed
 
 We used a logistic LASSO with the 'successful' tweet variable as the outcome variable, and all the words we identified above as covariates. For Trump's tweets, the inclusion of words with the root 'horrif', such as 'horrific' or 'horrifying', increases the odds of a tweet to be on the 90th percentil of most successful tweets by `r exp(lasso_favs_trump_success_coefs[order(-lasso_favs_trump_success_coefs)][1])` times, holding everything else constant.
 
+Furthermore, for Biden's tweets words such as 'wound', 'belittle' or 'complacient' are the words that increases the odds for a tweet to be successful. For instance, the word 'wound' increases `r exp(lasso_favs_biden_success_coefs[order(-lasso_favs_biden_success_coefs)][1])`the odds of being a successful tweet ceteris paribus.
+
+In conclusion, from the LASSO model with the lowest AICc we found that there are some specific words that increase or decrease the number of favorites and retweets for each candidate. Moreover, we found that some of those words also are part of the most successful tweets for each candidate. Finally, it is important to notice that even though we found important signals for individual words, the context in which those words were used also matters. Same words could have different meanings depending on the context and this is lost when we look at them sepparately from the whole tweet.
+
 ## References
 
 ## Session info
