@@ -75,98 +75,186 @@ dim(data_tokens)
   # creating a document-term matrix with all features and tf weighting
   cast_dtm(document = X, term = word_stem, value = n))
 ```
+
 ## Topic Modelling
-```{r}
-data_matrix_trump <- data_tokens %>%
+
+A good start for our exploratory analysis of tweets is trying to find out if there are some recognizable patterns in the way both personalitis write. Thus, we can try to discover and identify some topics under which some words are more likely to be employed than others. This assesment not only allow us to cluster tweets under topics but also we can test if these are useful to predict the impact that tweets could have in social media using measures such the number of favorites or retweets.
+
+```{r data matrix for topics}
+# Data matrix for Trump
+trump_tm <- data_tokens %>%
   mutate(screen_name = as.character(screen_name)) %>%
+  # filtering word "trump"
   filter(screen_name == "realDonaldTrump",
-         text != "trump") %>%
-  count(X, text) %>%
+         word_stem != "trump") %>% 
+  count(X, word_stem) %>%
   cast_dtm(document = X,
-           term = text,
+           term = word_stem,
            value = n) %>%
   removeSparseTerms(sparse = .99)
 
-data_matrix_biden <- data_tokens %>%
+trump_tm <- trump_tm[unique(trump_tm$i),] # removing tweets with no terms remaining
+
+# Data matrix for Biden
+biden_tm <- data_tokens %>%
   mutate(screen_name = as.character(screen_name)) %>%
-  filter(screen_name == "JoeBiden",
-         text != "trump") %>%
-  count(X, text) %>%
+  # filtering word "trump"
+  filter(screen_name == "JoeBiden", 
+         word_stem != "trump") %>%
+  count(X, word_stem) %>%
   cast_dtm(document = X,
-           term = text,
+           term = word_stem,
            value = n) %>%
   removeSparseTerms(sparse = .99)
 
-# remove documents with no terms remaining
-(data_matrix_trump <- data_matrix_trump[unique(data_matrix_trump$i),])
-(data_matrix_biden <- data_matrix_biden[unique(data_matrix_biden$i),])
-
-# Assuming only 2 topics
-trump_topics <- topics(data_matrix_trump,K=2, verb=10)
-rownames(trump_topics$theta)[order(trump_topics$theta[,1], decreasing=TRUE)[1:5]]
-rownames(trump_topics$theta)[order(trump_topics$theta[,2], decreasing=TRUE)[1:5]]
-
-biden_topics <- topics(data_matrix_biden,K=2, verb=10)
-rownames(biden_topics$theta)[order(biden_topics$theta[,1], decreasing=TRUE)[1:5]]
-rownames(biden_topics$theta)[order(biden_topics$theta[,2], decreasing=TRUE)[1:5]]
+biden_tm <- biden_tm[unique(biden_tm$i),] # removing tweets with no terms remaining
 ```
 
-### wordcloud
-```{r}
-# TRUMP
+The analysis for Trump includes `r dim(trump_tm)[1]` tweets containing `r dim(trump_tm)[2]` words after removing stop words and stemming. Likewise, data for Biden includes `r dim(biden_tm)[1]` tweets and `r dim(biden_tm)[2]` words after the same data cleanning. Given this information, we can try different numbers of topics that underlie behind text and decide based on the highest log Bayes Factor (BF). It is important to notice that by clustering for text, we assume that documents (tweets) are drawn from a multinomial mixture in which each word has a different probabilty depending on the topic and each tweet itself is a mixture or combination of these topic. 
+
+### Topic analysis for Trump's tweets:
+
+```{r k selection for Trump}
+# Topics for Trump
+trump_topics <- topics(trump_tm, K=(2:8), verb=10)
+summary(trump_topics, n=10)
+```
+
+Taking into account up to 8 different topics for Trump, BF criteria selecst only 6 topics. The following table contains the top ten words with higher probability in each topic:
+
+```{r top ten words Trump}
+t1 <- rownames(trump_topics$theta)[order(trump_topics$theta[,1], decreasing=TRUE)[1:10]]
+t2 <- rownames(trump_topics$theta)[order(trump_topics$theta[,2], decreasing=TRUE)[1:10]]
+t3 <- rownames(trump_topics$theta)[order(trump_topics$theta[,3], decreasing=TRUE)[1:10]]
+t4 <- rownames(trump_topics$theta)[order(trump_topics$theta[,4], decreasing=TRUE)[1:10]]
+t5 <- rownames(trump_topics$theta)[order(trump_topics$theta[,5], decreasing=TRUE)[1:10]]
+t6 <- rownames(trump_topics$theta)[order(trump_topics$theta[,6], decreasing=TRUE)[1:10]]
+
+kable(cbind(t1,t2, t3, t4, t5, t6),
+      col.names = c("Topic 1", "Topic 2", "Topic 3", "Topic 4", "Topic 5", "Topic 6"),
+      align = "c")
+```
+
+Even when these 6 topics contain a variety of words, we can clearly identify that topic 1 and 3 have a positive connotation whereas topic 2, 4, 5 and 6 have are the opposite and related to a more contentious position. This interpretation does not differ much from the president's polarized speech commonly used.
+
+Wordcloud for the more frequent topics in Trump's speech:
+
+```{r wordcloud Trump}
 par(mfrow=c(1,2))
 wordcloud(row.names(trump_topics$theta),
+          random.order = FALSE,
           freq=trump_topics$theta[,1],
           #min.freq=0.0001,
           col="maroon")
-wordcloud(row.names(trump_topics$theta), 
+wordcloud(row.names(trump_topics$theta),
+          random.order = FALSE,
           freq=trump_topics$theta[,2],
           #min.freq=0.0001,
-          col="navy")
+          col="maroon")
+```
 
-# BIDEN
+### Topic analysis for Biden's tweets:
+
+```{r k selection for Biden}
+# Topics for Biden
+biden_topics <- topics(biden_tm, K=(2:8), verb=10)
+summary(biden_topics, n=10)
+```
+
+Once again we evalute up to 8 topics for Biden's tweets. BF criteria selects 6 topics again. The following table contains the top ten words with higher probability in each topic:
+
+```{r top ten words Biden}
+b1 <- rownames(biden_topics$theta)[order(biden_topics$theta[,1], decreasing=TRUE)[1:10]]
+b2 <- rownames(biden_topics$theta)[order(biden_topics$theta[,2], decreasing=TRUE)[1:10]]
+b3 <- rownames(biden_topics$theta)[order(biden_topics$theta[,3], decreasing=TRUE)[1:10]]
+b4 <- rownames(biden_topics$theta)[order(biden_topics$theta[,4], decreasing=TRUE)[1:10]]
+b5 <- rownames(biden_topics$theta)[order(biden_topics$theta[,5], decreasing=TRUE)[1:10]]
+b6 <- rownames(biden_topics$theta)[order(biden_topics$theta[,6], decreasing=TRUE)[1:10]]
+
+kable(cbind(b1,b2, b3, b4, b5, b6),
+      col.names = c("Topic 1", "Topic 2", "Topic 3", "Topic 4", "Topic 5", "Topic 6"),
+      align = "c")
+```
+
+In contrast to Trump'tweets, Biden's topics contain less agressive words and the tone of speech seems to be more moderate. This time we don't observe strong words such "hoax", "fraud" or "collusion". Moreover, Biden tends to include more positive words in his tweets since this are more frequent accross topics.
+
+Wordcloud for the more frequent topics in Biden's speech:
+
+```{r wordcloud Biden}
 par(mfrow=c(1,2))
-
 wordcloud(row.names(biden_topics$theta),
+          random.order = FALSE,
           freq=biden_topics$theta[,1],
           #min.freq=0.0001,
-          col="maroon")
-wordcloud(row.names(biden_topics$theta), 
+          col="navy")
+wordcloud(row.names(biden_topics$theta),
+          random.order = FALSE,
           freq=biden_topics$theta[,2],
           #min.freq=0.0001,
           col="navy")
 ```
 
 ### Topic regression
-```{r}
-## omega is the matrix of tweets topic weights
-## we'll regress retweets_counts onto it
-trump_fav <- slice(data, as.numeric(data_matrix_trump$dimnames$Docs))
-y <- trump_fav[,"retweet_count"]
 
-trumpreg <- gamlr(trump_topics$omega, y)
+Now we try to find out if clustering is useful for predicting the impact of tweets measured as the number or retweet or times that users shared the information. For this, we relate topics with variable `retweet_count` in a a second-stage low-D regression and compare results with a regression using all words (our original high-D matrix).
 
-coef(trumpreg)*0.1 # number of retweets up or down for moving up 10\% weight in that topic
+### Trump: second-stage low-D regression vs word regression
 
-regtopics.cv <- cv.gamlr(trump_topics$omega, y,lambda.min.ratio=10^{-4})
-regtopics.cv
+```{r Topic regression Trump}
+# Regress retweets_counts on omega (matrix with tweets topic weights)
+trump_rts <- slice(data, as.numeric(trump_tm$dimnames$Docs))
+y <- trump_rts[,"retweet_count"]
 
+trump_topics_reg.cv <- cv.gamlr(trump_topics$omega, y,
+                        lambda.min.ratio=10^{-4})
+
+coef(trump_topics_reg.cv) # number of retweets up or down for moving up 10\% weight in that topic
+```
+
+Results for Trump suggest that only topic 2 have a positive effect on number of retweets. Recall that under this topic, aggressive words are likely to appear such "fake", "enemy", "corrupt" or "crazy". Therefore, results are preliminar evidence that suggest that Trump's confrontational tone is effective at least in Twitter.
+
+```{r Word regression Trump}
 ## give it the word %s as inputs
-#x <- 100*data_matrix_trump/rowSums(data_matrix_trump)
+trump_words_reg.cv <- cv.gamlr(trump_tm, y)
+coef(trump_words_reg.cv)
+```
 
-regwords.cv <- cv.gamlr(data_matrix_trump, y)
+In this sense, regression using words suggests similar findings. Using high-dimensional matrix, word regression finds that the same likely words contained in topic 2 have a significant effect on the number of retweets which adds evidence to signal found in previous regression. Moreover, some additional words are added to the list such "relief", "support" or "crisis" but these have a negative effect on diffusion of tweets.
 
+```{r Comparison reg Trump}
 par(mfrow=c(1,2))
-
-plot(regtopics.cv)
+plot(trump_topics_reg.cv)
 mtext("topic regression", font=2, line=2)
-
-plot(regwords.cv)
+plot(trump_words_reg.cv)
 mtext("bigram regression", font=2, line=2)
+```
 
-# min OOS MSE
-min(regtopics.cv$cvm)
-min(regwords.cv$cvm)
+Finally, a comparison of the predictive power of these two regression reveals that topic clustering is less efective than using words. Thus, the later one yields a lower out-of-sample mean squared error which entails a better performance in terms of prediction. 
+### Biden: second-stage low-D regression vs word regression
+
+```{r Topic regression Biden}
+# Regress retweets_counts on omega (matrix with tweets topic weights)
+biden_rts <- slice(data, as.numeric(biden_tm$dimnames$Docs))
+y <- biden_rts[,"retweet_count"]
+
+biden_topics_reg.cv <- cv.gamlr(biden_topics$omega, y,
+                        lambda.min.ratio=10^{-4})
+
+coef(biden_topics_reg.cv) # number of retweets up or down for moving up 10\% weight in that topic
+```
+
+```{r Word regression Biden}
+## give it the word %s as inputs
+biden_words_reg.cv <- cv.gamlr(biden_tm, y)
+coef(biden_words_reg.cv)
+```
+
+```{r Comparison reg Biden}
+par(mfrow=c(1,2))
+plot(biden_topics_reg.cv)
+mtext("topic regression", font=2, line=2)
+plot(biden_words_reg.cv)
+mtext("bigram regression", font=2, line=2)
 ```
 
 ## Sentiment Analysis
