@@ -85,6 +85,8 @@ dim(data_tokens)
 
 # Topic Modelling
 
+## Topic Analysis
+
 A good start for our exploratory analysis of tweets is trying to find out if there are some recognizable patterns in the way both personalities write. Thus, we can try to discover and identify some topics under which some words are more likely to be employed than others. This assessment not only allow us to cluster tweets under topics but also, we can test if these are useful to predict the impact that tweets could have in social media using measures such the number of retweets.
 
 ```{r data matrix for topics}
@@ -119,7 +121,7 @@ biden_tm <- biden_tm[unique(biden_tm$i),] # removing tweets with no terms remain
 
 The analysis for Trump includes `r dim(trump_tm)[1]` tweets containing `r dim(trump_tm)[2]` words after removing stop words and stemming. Likewise, data for Biden includes `r dim(biden_tm)[1]` tweets and `r dim(biden_tm)[2]` words after the same data cleaning. Given this information, we can hypothesize different numbers of topics that underlie behind text and decide the final number based on the highest log Bayes Factor (BF), an information criterion. It is important to notice that by clustering for text, we assume that documents (tweets) are drawn from a multinomial mixture distribution in which each word has a different probability depending on the topic and each tweet itself is a mixture or combination of these topics.
 
-## Topic analysis for Trump's tweets:
+### Topic analysis for Trump's tweets:
 
 ```{r k selection for Trump}
 # Topics for Trump
@@ -160,7 +162,7 @@ wordcloud(row.names(trump_topics$theta),
           col="maroon")
 ```
 
-## Topic analysis for Biden's tweets:
+### Topic analysis for Biden's tweets:
 
 ```{r k selection for Biden}
 # Topics for Biden
@@ -698,7 +700,7 @@ plot(interest_igraph, vertex.color=vcol_interest, vertex.frame.color="white", ve
 
 \newpage
 
-## Session info
+# Session info
 ```{r}
 devtools::session_info()
 ```
