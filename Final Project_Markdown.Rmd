@@ -297,7 +297,7 @@ These findings are consistent with results using words. Regression shows that no
 
 This section shows the sentiment analysis of the tweets of both candidates. For doing this task, we considered the NRC sentiment dictionary.   
 
-```{r, cache=TRUE}
+```{r}
 #Sentiment analysis for Trump
 data_trump <- data[data$screen_name== "realDonaldTrump",]
 data_trump$text_plain <- plain_tweets(data_trump$text)
