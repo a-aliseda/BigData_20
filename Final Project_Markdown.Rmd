@@ -256,6 +256,9 @@ coef(biden_words_reg.cv)
 These findings are consistent with results using words. Regression shows that none of the words have an effect on retweets. Thus, underlying topics do not contain any signal for prediction since words neither. Whereas for Trump the usage of some specific topics and words have an effect on retweets, Biden followers tend to be less sensible to the topic or tone of his speech what could potentially explain the findings.
 
 ## Sentiment Analysis
+
+This section shows the sentiment analysis of the tweets of both candidates. For doing this task, we considered the NRC sentiment dictionary.   
+
 ```{r, warning=FALSE}
 #Sentiment analysis for Trump
 data_trump <- data[data$screen_name== "realDonaldTrump",]
@@ -285,10 +288,22 @@ rownames(new_sa_biden) <- NULL
 #Plotting the sentiments
 qplot(sentiment, data=new_sa_trump[1:8,], weight=count, geom="bar",fill=sentiment)+ggtitle("Trump's Sentiments")
 qplot(sentiment, data=new_sa_biden[1:8,], weight=count, geom="bar",fill=sentiment)+ggtitle("Biden's Sentiments")
-qplot(sentiment, data=new_sa_trump[9:10,], weight=count, geom="bar",fill=sentiment)+ggtitle("Trump's Sentiments")
-qplot(sentiment, data=new_sa_biden[9:10,], weight=count, geom="bar",fill=sentiment)+ggtitle("Biden's Sentiments")
+
+#Ploting negative and positive sentiments
+data_plot <- data.frame(
+  name=c("Trump Negative", "Biden Negative", "Trump Positive", "Biden Positive"),
+  value=c(new_sa_trump[9,]$count, new_sa_biden[9,]$count, 
+          new_sa_trump[10,]$count, new_sa_biden[10,]$count)
+)
+
+ggplot(data_plot, aes(x=name, y=value))+geom_bar(stat="identity", color='blue', fill=rgb(0.1,0.4,0.5,0.7)) + 
+  xlab("Sentiment") +
+  ylab("Count")
+
 
 ```
+
+As we can see in the graphs, the distribution of the sentiments are similar. Due to their political nature, the most frequent sentiment is "trust" for both candidates. Surprisingly, when we compare the positive and negative sentiments for both candidates, Joe Biden shows a higher count for the negative sentiment than Donald Trump. 
 
 ## LASSO analysis for count of words on Favorites and Retweets
 
