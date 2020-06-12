@@ -1,0 +1,239 @@
+---
+title: "Final Project"
+author: "Angel Aliseda, Javier Patino, Fernando Regalado, Felipe Salazar"
+date: "5/12/2020"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+
+## Retrieving the tweets from the accounts of Donald Trump and Joe Biden
+
+```{r, results="show", warning=FALSE}
+## actors network example
+
+library(tidyverse)
+library(igraph)
+library(rtweet)
+library(dplyr)
+library(ggplot2)
+library(readxl)
+
+# Load database from repository
+candidates_tweets <- read.csv("Candidates_tweets.csv")
+```
+
+# Network Analysis
+
+```{r}
+# Organize data for network analysis
+network <- select(candidates_tweets, user_id, screen_name, mentions_screen_name)
+network <- network %>%
+  filter(is.na(mentions_screen_name) == FALSE)
+network_final <- network %>%
+  mutate(has_multiple_names = ifelse(str_detect(mentions_screen_name, "[(]"), 1, 0))
+multiple_names <- network_final %>%
+  filter(has_multiple_names == 1) 
+multiple_names <- multiple_names %>%
+  mutate(number_of_words = str_count(mentions_screen_name, "[,]") + 1) 
+max_num_words = max(multiple_names$number_of_words)
+multiple_names <- multiple_names %>%
+  separate(
+    mentions_screen_name,
+    c('word1', 'word2', 'word3', 'word4', 'word5', 'word6', 'word7', 'word8', 'word9', 'word10', 'word11', 'word12', 'word13'),
+    sep = "[^[:alnum:]]+",
+    remove = TRUE,
+    convert = FALSE,
+    extra = "warn",
+    fill = "warn"
+  )
+multiple_names <- multiple_names %>%
+  pivot_longer(starts_with('word'), names_to = 'word_num')
+multiple_names <- multiple_names %>%
+  filter(value != 'c') %>%
+  rename(mentions_screen_name = value) %>%
+  select(user_id, screen_name, mentions_screen_name) %>%
+  filter(!is.na(mentions_screen_name))
+initial_network <- network_final %>%
+  filter(has_multiple_names == 0) %>%
+  select(-has_multiple_names)
+
+network_final <- rbind(initial_network, multiple_names)
+```
+
+\medskip
+
+For the network analysis, we considered the accounts Trump and Biden mentioned in their tweets. We did not analyse the accounts that were mentioned without the handle ("@"), just the ones that were directly mentioned. 
+The network analysis plots illustrate the mentions from Trump and Biden's accounts. Trump is displayed in a light red circle and Biden in a light blue circle. All mentioned accounts are shown in a light green circle each. The red lines show who Trump mentioned while the blue lines show who Biden mentioned. The shorter the line, and therefore closer the circle, the more mentiones are done by the candidate. 
+We analyzed only selected accounts mentioned and divided them into three groups:
+(1) News: major news accounts trying to include different sources and perspectives.
+(2) Other candidates: other candidates int the 2020 presidential election. We only included candidates who were mentioned and were still running by November 1, 2019.
+(3) Accounts of interest: some accounts who have significant relevance. President Obama; Hillary Clinton, ex Secretary of State and former candidate against President Trump in 2016; current vice president Pence; the two highest secretaries in the order of precedence, Pompeo and Mnuchin, State and Treasury respectively; both of the candidate's parties; and Speaker of the House and Senate Majority Leader who interestingly are from the two candidate's parties, the Speaker, Pelosi is Democrat, and the Senate Majority Leader, McConnell, is Republican. 
+
+
+## News
+
+The network analysis of news accounts shows Biden is less active than Trump when it comes to mentioning news accounts. Trump is almost equally likely to mention news sources that critize him like NY Times as those that favor him like Fox News. Meanwhile, Biden mentions few accounts which are in general terms favorable to him. Both candidates mention CNN but Trump does it at a larger scale. 
+
+```{r}
+# List of News Accounts
+newslist <- c("60Minutes", "AP", "BreitbartNews", "CBS", "CNBC", "CNN", "CNNPolitics", "FoxNews", "MSNBC", "NBCNews", "nytimes", "washingtonpost", "WSJ")
+network_news <- filter(network_final, mentions_screen_name %in% newslist)
+```
+
+```{r, warning=FALSE}
+# Create Edges and Nodes for News
+candidate_news <- network_news %>%
+  distinct(screen_name) %>%
+  rename(label = screen_name)
+
+mention_news <- network_news %>%
+  distinct(mentions_screen_name) %>%
+  rename(label = mentions_screen_name)
+
+nodes_news <- full_join(candidate_news, mention_news, by = "label")
+
+nodes_news <- nodes_news %>% rowid_to_column("id")
+
+route_news <- network_news %>%  
+  group_by(screen_name, mentions_screen_name) %>%
+  summarise(weight = n()) %>% 
+  ungroup()
+
+edges_news <- route_news %>% 
+  left_join(nodes_news, by = c("screen_name" = "label")) %>% 
+  rename(from = id)
+
+edges_news <- edges_news %>% 
+  left_join(nodes_news, by = c("mentions_screen_name" = "label")) %>% 
+  rename(to = id)
+
+edges_news <- select(edges_news, from, to, weight)
+
+news_igraph <- graph_from_data_frame(d = edges_news, vertices = nodes_news, directed = TRUE)
+```
+
+```{r}
+# News Network Plot
+edges_Trump_news <- incident(news_igraph, V(news_igraph)[label=="realDonaldTrump"], mode="all")
+ecol_news <- rep("blue", ecount(news_igraph))
+ecol_news[edges_Trump_news] <- "red"
+
+vcol_news <- rep("lightgreen", vcount(news_igraph)) 
+vcol_news[V(news_igraph)$label=="JoeBiden"] <- "lightblue"
+vcol_news[V(news_igraph)$label=="realDonaldTrump"] <- "pink" 
+
+plot(news_igraph, vertex.color=vcol_news, vertex.frame.color="white", vertex.label.color="black", edge.color=ecol_news, edge.arrow.size = 0.2, vertex.label.cex=c(0.6))
+```
+
+
+## Other Candidates
+All the candidates that meet the criteria to be classified in this list (being mentioned at least once and still running by November 1, 2019) are democrats are are also mentioned by Biden. Trump only mentions Buttigieg and Klobuchar who is also mentioned more by Trump than by Biden. 
+
+```{r}
+# List of Other Candidates Accounts
+candidateslist <- c("amyklobuchar", "AndrewYang", "BernieSanders", "BetoORourke", "CoryBooker", "ewarren", "GovernorBullock", "JulianCastro", "KamalaHarris", "MikeBloomberg", "PeteButtigieg", "TulsiGabbard")
+network_candidates <- filter(network_final, mentions_screen_name %in% candidateslist)
+```
+
+```{r, warning=FALSE}
+# Create Edges and Nodes for Other Candidates
+candidate_candidates <- network_candidates %>%
+  distinct(screen_name) %>%
+  rename(label = screen_name)
+
+mention_candidates <- network_candidates %>%
+  distinct(mentions_screen_name) %>%
+  rename(label = mentions_screen_name)
+
+nodes_candidates <- full_join(candidate_candidates, mention_candidates, by = "label")
+
+nodes_candidates <- nodes_candidates %>% rowid_to_column("id")
+
+route_candidates <- network_candidates %>%  
+  group_by(screen_name, mentions_screen_name) %>%
+  summarise(weight = n()) %>% 
+  ungroup()
+
+edges_candidates <- route_candidates %>% 
+  left_join(nodes_candidates, by = c("screen_name" = "label")) %>% 
+  rename(from = id)
+
+edges_candidates <- edges_candidates %>% 
+  left_join(nodes_candidates, by = c("mentions_screen_name" = "label")) %>% 
+  rename(to = id)
+
+edges_candidates <- select(edges_candidates, from, to, weight)
+
+candidates_igraph <- graph_from_data_frame(d = edges_candidates, vertices = nodes_candidates, directed = TRUE)
+```
+
+```{r}
+# Other Candidates Network Plot
+edges_Trump_candidates <- incident(candidates_igraph, V(candidates_igraph)[label=="realDonaldTrump"], mode="all")
+ecol_candidates <- rep("blue", ecount(candidates_igraph))
+ecol_candidates[edges_Trump_candidates] <- "red"
+
+vcol_candidates <- rep("lightgreen", vcount(candidates_igraph)) 
+vcol_candidates[V(candidates_igraph)$label=="JoeBiden"] <- "lightblue"
+vcol_candidates[V(candidates_igraph)$label=="realDonaldTrump"] <- "pink" 
+
+plot(candidates_igraph, vertex.color=vcol_candidates, vertex.frame.color="white", vertex.label.color="black", edge.color=ecol_candidates, edge.arrow.size = 0.2, vertex.label.cex=c(0.6))
+```
+
+
+## Accounts of Interest
+The las group covers some accounts that have significant impact during the election process. This explains why Trump mentions all of them and Biden all except the Republican Party and the Secretary of State. The Senate Majority Leader, a Republican, is the most mentioned by both candidates. While Biden doesn't mention the Republican Party, Trump mentions the Democratic Party as much as Biden, while Obama and Clinton are mentioned slighly more by Biden than by Trump. 
+
+```{r}
+# List of Accounts of Interest
+interestlist <- c("BarackObama", "GOP", "HillaryClinton", "Pence", "SecPompeo", "senatemajldr", "SpeakerPelosi", "stevenmnuchin1", "TheDemocrats")
+network_interest <- filter(network_final, mentions_screen_name %in% interestlist)
+```
+
+```{r, warning=FALSE}
+# Create Edges and Nodes for Accounts of Interst
+candidate_interest <- network_interest %>%
+  distinct(screen_name) %>%
+  rename(label = screen_name)
+
+mention_interest <- network_interest %>%
+  distinct(mentions_screen_name) %>%
+  rename(label = mentions_screen_name)
+
+nodes_interest <- full_join(candidate_interest, mention_interest, by = "label")
+
+nodes_interest <- nodes_interest %>% rowid_to_column("id")
+
+route_interest <- network_interest %>%  
+  group_by(screen_name, mentions_screen_name) %>%
+  summarise(weight = n()) %>% 
+  ungroup()
+
+edges_interest <- route_interest %>% 
+  left_join(nodes_interest, by = c("screen_name" = "label")) %>% 
+  rename(from = id)
+
+edges_interest <- edges_interest %>% 
+  left_join(nodes_interest, by = c("mentions_screen_name" = "label")) %>% 
+  rename(to = id)
+
+edges_interest <- select(edges_interest, from, to, weight)
+
+interest_igraph <- graph_from_data_frame(d = edges_interest, vertices = nodes_interest, directed = TRUE)
+```
+
+```{r}
+# Accounts of Interest Network Plot
+edges_Trump_interest <- incident(interest_igraph, V(interest_igraph)[label=="realDonaldTrump"], mode="all")
+ecol_interest <- rep("blue", ecount(interest_igraph))
+ecol_interest[edges_Trump_interest] <- "red"
+
+vcol_interest <- rep("lightgreen", vcount(interest_igraph)) 
+vcol_interest[V(interest_igraph)$label=="JoeBiden"] <- "lightblue"
+vcol_interest[V(interest_igraph)$label=="realDonaldTrump"] <- "pink" 
+
+plot(interest_igraph, vertex.color=vcol_interest, vertex.frame.color="white", vertex.label.color="black", edge.color=ecol_interest, edge.arrow.size = 0.2, vertex.label.cex=c(0.6))
+```
+
