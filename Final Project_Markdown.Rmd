@@ -78,7 +78,7 @@ dim(data_tokens)
 
 ## Topic Modelling
 
-A good start for our exploratory analysis of tweets is trying to find out if there are some recognizable patterns in the way both personalitis write. Thus, we can try to discover and identify some topics under which some words are more likely to be employed than others. This assesment not only allow us to cluster tweets under topics but also we can test if these are useful to predict the impact that tweets could have in social media using measures such the number of favorites or retweets.
+A good start for our exploratory analysis of tweets is trying to find out if there are some recognizable patterns in the way both personalities write. Thus, we can try to discover and identify some topics under which some words are more likely to be employed than others. This assessment not only allow us to cluster tweets under topics but also, we can test if these are useful to predict the impact that tweets could have in social media using measures such the number of retweets.
 
 ```{r data matrix for topics}
 # Data matrix for Trump
@@ -110,7 +110,7 @@ biden_tm <- data_tokens %>%
 biden_tm <- biden_tm[unique(biden_tm$i),] # removing tweets with no terms remaining
 ```
 
-The analysis for Trump includes `r dim(trump_tm)[1]` tweets containing `r dim(trump_tm)[2]` words after removing stop words and stemming. Likewise, data for Biden includes `r dim(biden_tm)[1]` tweets and `r dim(biden_tm)[2]` words after the same data cleanning. Given this information, we can try different numbers of topics that underlie behind text and decide based on the highest log Bayes Factor (BF). It is important to notice that by clustering for text, we assume that documents (tweets) are drawn from a multinomial mixture in which each word has a different probabilty depending on the topic and each tweet itself is a mixture or combination of these topic. 
+The analysis for Trump includes `r dim(trump_tm)[1]` tweets containing `r dim(trump_tm)[2]` words after removing stop words and stemming. Likewise, data for Biden includes `r dim(biden_tm)[1]` tweets and `r dim(biden_tm)[2]` words after the same data cleaning. Given this information, we can hypothesize different numbers of topics that underlie behind text and decide the final number based on the highest log Bayes Factor (BF), an information criterion. It is important to notice that by clustering for text, we assume that documents (tweets) are drawn from a multinomial mixture distribution in which each word has a different probability depending on the topic and each tweet itself is a mixture or combination of these topics.
 
 ### Topic analysis for Trump's tweets:
 
@@ -120,7 +120,7 @@ trump_topics <- topics(trump_tm, K=(2:8), verb=10)
 summary(trump_topics, n=10)
 ```
 
-Taking into account up to 8 different topics for Trump, BF criteria selecst only 6 topics. The following table contains the top ten words with higher probability in each topic:
+Taking into account up to 8 different topics for Trump, BF criteria selects only 6 topics. The following table contains the top ten words with higher probability in each topic:
 
 ```{r top ten words Trump}
 t1 <- rownames(trump_topics$theta)[order(trump_topics$theta[,1], decreasing=TRUE)[1:10]]
@@ -137,7 +137,7 @@ kable(cbind(t1,t2, t3, t4, t5, t6),
 
 Even when these 6 topics contain a variety of words, we can clearly identify that topic 1 and 3 have a positive connotation whereas topic 2, 4, 5 and 6 have are the opposite and related to a more contentious position. This interpretation does not differ much from the president's polarized speech commonly used.
 
-Wordcloud for the more frequent topics in Trump's speech:
+The following wordcloud depicts the two most frequent topics in Trump's speech:
 
 ```{r wordcloud Trump}
 par(mfrow=c(1,2))
@@ -161,7 +161,7 @@ biden_topics <- topics(biden_tm, K=(2:8), verb=10)
 summary(biden_topics, n=10)
 ```
 
-Once again we evalute up to 8 topics for Biden's tweets. BF criteria selects 6 topics again. The following table contains the top ten words with higher probability in each topic:
+Once again, we evaluate up to 8 topics for Biden's tweets and BF selects 6 topics again. The following table contains the top ten words with higher probability in each topic:
 
 ```{r top ten words Biden}
 b1 <- rownames(biden_topics$theta)[order(biden_topics$theta[,1], decreasing=TRUE)[1:10]]
@@ -176,9 +176,9 @@ kable(cbind(b1,b2, b3, b4, b5, b6),
       align = "c")
 ```
 
-In contrast to Trump'tweets, Biden's topics contain less agressive words and the tone of speech seems to be more moderate. This time we don't observe strong words such "hoax", "fraud" or "collusion". Moreover, Biden tends to include more positive words in his tweets since this are more frequent accross topics.
+In contrast to Trump ‘tweets, Biden's topics contain less aggressive words and the tone of speech seems to be more moderate. This time we don't observe strong words such "hoax", "fraud" or "collusion". Moreover, Biden tends to include more positive words in his tweets since these are more frequent across topics.
 
-Wordcloud for the more frequent topics in Biden's speech:
+We can see this graphically in the following word cloud for the two most frequent topics. 
 
 ```{r wordcloud Biden}
 par(mfrow=c(1,2))
@@ -211,7 +211,7 @@ trump_topics_reg.cv <- cv.gamlr(trump_topics$omega, y,
 coef(trump_topics_reg.cv) # number of retweets up or down for moving up 10\% weight in that topic
 ```
 
-Results for Trump suggest that only topic 2 have a positive effect on number of retweets. Recall that under this topic, aggressive words are likely to appear such "fake", "enemy", "corrupt" or "crazy". Therefore, results are preliminar evidence that suggest that Trump's confrontational tone is effective at least in Twitter.
+Results for Trump suggest that only topic 2 have a positive effect on number of retweets. Recall that under this topic, aggressive words are likely to appear such "fake", "enemy", "corrupt" or "crazy". Therefore, results are preliminary  evidence that suggest that Trump's confrontational tone is effective at least in Twitter. In average, number of Trump's retweets is `r round(coef(trump_topics_reg.cv)[1],0)`, but it can increase by `r round(coef(trump_topics_reg.cv)[3],0)` if text corresponds to topic 2.
 
 ```{r Word regression Trump}
 ## give it the word %s as inputs
@@ -219,7 +219,7 @@ trump_words_reg.cv <- cv.gamlr(trump_tm, y)
 coef(trump_words_reg.cv)
 ```
 
-In this sense, regression using words suggests similar findings. Using high-dimensional matrix, word regression finds that the same likely words contained in topic 2 have a significant effect on the number of retweets which adds evidence to signal found in previous regression. Moreover, some additional words are added to the list such "relief", "support" or "crisis" but these have a negative effect on diffusion of tweets.
+In addition, word regression suggests similar findings. Using high-dimensional matrix, word regression finds that the same words contained in topic 2 have a significant effect on the number of retweets which adds evidence to signal found in previous regression. Moreover, some additional words are added to the list such "relief", "support" or "crisis" but these have a negative effect on diffusion of tweets.
 
 ```{r Comparison reg Trump}
 par(mfrow=c(1,2))
@@ -229,7 +229,7 @@ plot(trump_words_reg.cv)
 mtext("bigram regression", font=2, line=2)
 ```
 
-Finally, a comparison of the predictive power of these two regression reveals that topic clustering is less efective than using words. Thus, the later one yields a lower out-of-sample mean squared error which entails a better performance in terms of prediction. 
+Finally, a comparison of the predictive power of these two regressions reveals that topic clustering is less effective than using words. Thus, the later one yields a lower out-of-sample mean squared error which entails a better performance in terms of prediction. 
 ### Biden: second-stage low-D regression vs word regression
 
 ```{r Topic regression Biden}
@@ -237,11 +237,15 @@ Finally, a comparison of the predictive power of these two regression reveals th
 biden_rts <- slice(data, as.numeric(biden_tm$dimnames$Docs))
 y <- biden_rts[,"retweet_count"]
 
+# favorite/retweet
+
 biden_topics_reg.cv <- cv.gamlr(biden_topics$omega, y,
                         lambda.min.ratio=10^{-4})
 
 coef(biden_topics_reg.cv) # number of retweets up or down for moving up 10\% weight in that topic
 ```
+
+In contrast to Trump's results, for Biden none of the topics are useful to predict number of retweets. This entails that none of the topics contain a signal and therefore, regardless of topic, a Biden's tweet is expected to be retweeted in average about `r round(coef(biden_topics_reg.cv)[1],0)` times. 
 
 ```{r Word regression Biden}
 ## give it the word %s as inputs
@@ -249,13 +253,7 @@ biden_words_reg.cv <- cv.gamlr(biden_tm, y)
 coef(biden_words_reg.cv)
 ```
 
-```{r Comparison reg Biden}
-par(mfrow=c(1,2))
-plot(biden_topics_reg.cv)
-mtext("topic regression", font=2, line=2)
-plot(biden_words_reg.cv)
-mtext("bigram regression", font=2, line=2)
-```
+These findings are consistent with results using words. Regression shows that none of the words have an effect on retweets. Thus, underlying topics do not contain any signal for prediction since words neither. Whereas for Trump the usage of some specific topics and words have an effect on retweets, Biden followers tend to be less sensible to the topic or tone of his speech what could potentially explain the findings.
 
 ## Sentiment Analysis
 ```{r, warning=FALSE}
