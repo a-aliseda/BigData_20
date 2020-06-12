@@ -3,8 +3,9 @@ title: "Big Data: Final Project"
 author: "Angel Aliseda, Javier Patino, Fernando Regalado, Felipe Salazar"
 date: "5/12/2020"
 output:
-  word_document: default
-  pdf_document: default
+  pdf_document:
+    number_sections: yes
+    toc: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -36,6 +37,8 @@ set.seed(411234)
 
 theme_set(theme_minimal())
 ```
+
+\newpage
 
 # Retrieving the tweets from the accounts of Donald Trump and Joe Biden
 
@@ -77,6 +80,8 @@ dim(data_tokens)
   # creating a document-term matrix with all features and tf weighting
   cast_dtm(document = X, term = word_stem, value = n))
 ```
+
+\newpage
 
 # Topic Modelling
 
@@ -200,7 +205,7 @@ wordcloud(row.names(biden_topics$theta),
 
 Now we try to find out if clustering is useful for predicting the impact of tweets measured as the number or retweet or times that users shared the information. For this, we relate topics with variable `retweet_count` in a a second-stage low-D regression and compare results with a regression using all words (our original high-D matrix).
 
-## Trump: second-stage low-D regression vs word regression
+### Trump: second-stage low-D regression vs word regression
 
 ```{r Topic regression Trump}
 # Regress retweets_counts on omega (matrix with tweets topic weights)
@@ -231,8 +236,9 @@ plot(trump_words_reg.cv)
 mtext("bigram regression", font=2, line=2)
 ```
 
-Finally, a comparison of the predictive power of these two regressions reveals that topic clustering is less effective than using words. Thus, the later one yields a lower out-of-sample mean squared error which entails a better performance in terms of prediction. 
-## Biden: second-stage low-D regression vs word regression
+Finally, a comparison of the predictive power of these two regressions reveals that topic clustering is less effective than using words. Thus, the later one yields a lower out-of-sample mean squared error which entails a better performance in terms of prediction.
+
+### Biden: second-stage low-D regression vs word regression
 
 ```{r Topic regression Biden}
 # Regress retweets_counts on omega (matrix with tweets topic weights)
@@ -257,11 +263,13 @@ coef(biden_words_reg.cv)
 
 These findings are consistent with results using words. Regression shows that none of the words have an effect on retweets. Thus, underlying topics do not contain any signal for prediction since words neither. Whereas for Trump the usage of some specific topics and words have an effect on retweets, Biden followers tend to be less sensible to the topic or tone of his speech what could potentially explain the findings.
 
+\newpage
+
 # Sentiment Analysis
 
 This section shows the sentiment analysis of the tweets of both candidates. For doing this task, we considered the NRC sentiment dictionary.   
 
-```{r, warning=FALSE}
+```{r, cache=TRUE}
 #Sentiment analysis for Trump
 data_trump <- data[data$screen_name== "realDonaldTrump",]
 data_trump$text_plain <- plain_tweets(data_trump$text)
@@ -306,6 +314,8 @@ ggplot(data_plot, aes(x=name, y=value))+geom_bar(stat="identity", color='blue', 
 ```
 
 As we can see in the graphs, the distribution of the sentiments are similar. Due to their political nature, the most frequent sentiment is "trust" for both candidates. Surprisingly, when we compare the positive and negative sentiments for both candidates, Joe Biden shows a higher count for the negative sentiment than Donald Trump. 
+
+\newpage
 
 # LASSO 
 
@@ -470,11 +480,13 @@ Furthermore, for Biden's tweets words such as 'wound', 'belittle' or 'complacien
 
 In conclusion, from the LASSO model with the lowest AICc we found that there are some specific words that increase or decrease the number of favorites and retweets for each candidate. Moreover, we found that some of those words also are part of the most successful tweets for each candidate. Finally, it is important to notice that even though we found important signals for individual words, the context in which those words were used also matters. Same words could have different meanings depending on the context and this is lost when we look at them sepparately from the whole tweet.
 
+\newpage
+
 # Network Analysis
 
 ```{r}
 # Organize data for network analysis
-network <- select(candidates_tweets, user_id, screen_name, mentions_screen_name)
+network <- select(data, user_id, screen_name, mentions_screen_name)
 network <- network %>%
   filter(is.na(mentions_screen_name) == FALSE)
 network_final <- network %>%
@@ -684,6 +696,7 @@ vcol_interest[V(interest_igraph)$label=="realDonaldTrump"] <- "pink"
 plot(interest_igraph, vertex.color=vcol_interest, vertex.frame.color="white", vertex.label.color="black", edge.color=ecol_interest, edge.arrow.size = 0.2, vertex.label.cex=c(0.6))
 ```
 
+\newpage
 
 ## Session info
 ```{r}
