@@ -309,7 +309,7 @@ As we can see in the graphs, the distribution of the sentiments are similar. Due
 
 # LASSO 
 
-## LASSO analysis for count of words on Favorites and Retweets
+## Effects of specific words on Favorites and Retweets for Trump and Biden
 
 ```{r fav_rt, warning=FALSE, results='asis'}
 
@@ -431,7 +431,7 @@ The last four tables present the words with the most positive and negative effec
 Moreover, for Biden's tweets a similar pattern arises. Words that describe President Trump as inept or unqualified gave him a wide support among his followers, but aggresive or harsher words against him lowered the popularity of his tweets.
 
 
-## LASSO analysis for "successful" tweets
+## Words included in Trump's and Biden's "successful" tweets
 ```{r lasso_success, warning=FALSE, results='asis'}
 
 ### We defined a "successful" tweet if it is on the 90th percentile or more 
