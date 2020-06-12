@@ -43,6 +43,32 @@ theme_set(theme_minimal())
 # Retrieving the tweets from the accounts of Donald Trump and Joe Biden
 
 ## Data transformation
+
+```{r, eval=FALSE}
+# Import Twitter database with tweets from Donald Trump and Joe Biden
+
+vignette("auth", package = "rtweet")
+
+## working with the stream
+vignette("stream", package = "rtweet")
+
+candidates <- get_timelines(
+  user = c("realDonaldTrump", "JoeBiden"),
+  n = 10000
+)
+
+table(candidates$screen_name)
+
+candidates %>%
+  group_by(screen_name) %>%
+  ts_plot(by = "week")
+
+candidates <- apply(candidates,2,as.character)
+
+#Export the final dataframe to a csv file
+write.csv(candidates, "Candidates_tweets.csv")
+```
+
 ```{r Data}
 # Load database from repository
 data <- read.csv(file = "Candidates_tweets.csv") %>%
